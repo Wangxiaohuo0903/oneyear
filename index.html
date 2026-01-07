@@ -21,6 +21,8 @@
             width: 100%; height: 100%; overflow: hidden;
             font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
             background-color: #1a1a1a; color: #fff;
+            /* 禁止双击缩放 */
+            touch-action: manipulation; 
         }
 
         /* --- 视频背景专用样式 --- */
@@ -38,7 +40,7 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             padding: 30px 20px;
             opacity: 0; pointer-events: none; transform: scale(1.05);
-            transition: opacity 0.8s ease, transform 0.8s ease;
+            transition: opacity 0.6s ease, transform 0.6s ease; /* 稍微调快了一点切换速度 */
             background-size: cover; background-position: center; z-index: 1;
         }
 
@@ -93,10 +95,6 @@
         .gallery-item { flex: 0 0 100%; height: 350px; border-radius: 12px; overflow: hidden; scroll-snap-align: center; position: relative; background: #333; }
         .gallery-item img, .gallery-item video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- 指示器 --- */
-        .indicator { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 12px; z-index: 20; animation: bounce 2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
-
         /* --- 音乐控制图标 --- */
         #music-control {
             position: fixed; top: 20px; right: 20px; z-index: 100;
@@ -108,38 +106,51 @@
         #music-control.paused { animation-play-state: paused; opacity: 0.5; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* ================= 新版特效样式 (参考你提供的代码) ================= */
+        /* --- [新增] 底部导航栏样式 --- */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 80px;
+            z-index: 90; /* 在页面之上，但在特效之下 */
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; box-sizing: border-box;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); /* 底部渐变黑，防止看不清按钮 */
+            pointer-events: none; /* 让点击穿透，点击具体按钮时再捕获 */
+        }
+        .nav-btn {
+            pointer-events: auto; /* 按钮可以点击 */
+            font-size: 14px; color: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            padding: 8px 16px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex; align-items: center; gap: 5px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .nav-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.3); }
+        .prev-btn { opacity: 0; transition: opacity 0.3s; } /* 默认隐藏上一页 */
+        .prev-btn.show { opacity: 1; } /* 需要显示时加上这个类 */
+
+        /* ================= 特效样式 ================= */
         #effect-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 999; overflow: hidden;
             display: none; 
         }
-
-        /* 通用掉落元素 */
         .falling-item {
-            position: absolute;
-            top: -10%;
-            will-change: transform;
+            position: absolute; top: -10%; will-change: transform;
             animation: heartFall linear forwards;
         }
-
         /* 纯粉色SVG桃心 */
         .pink-heart-svg {
-            width: 30px;
-            height: 30px;
+            width: 30px; height: 30px;
             background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ff6b81" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
-            background-repeat: no-repeat;
-            background-size: contain;
+            background-repeat: no-repeat; background-size: contain;
         }
-
         /* 粉色文字 */
         .pink-text-char {
-            font-weight: bold;
-            color: var(--primary-color);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            white-space: nowrap;
+            font-weight: bold; color: var(--primary-color);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); white-space: nowrap;
         }
-
         @keyframes heartFall {
             0% { transform: translateY(0) rotate(0deg); }
             100% { transform: translateY(120vh) rotate(360deg); }
@@ -156,7 +167,10 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
         </div>
 
-        <div class="indicator">点击屏幕继续 ▼</div>
+        <div class="nav-bar">
+            <div class="nav-btn prev-btn" id="btn-prev">❮ 上一页</div>
+            <div class="nav-btn next-btn" id="btn-next">下一页 ❯</div>
+        </div>
 
         <div class="page active" style="background-image: url('cover.jpg');">
             <div class="overlay"></div>
@@ -428,15 +442,17 @@
         const pages = document.querySelectorAll('.page');
         const audio = document.getElementById('bgm');
         const musicControl = document.getElementById('music-control');
+        const prevBtn = document.getElementById('btn-prev'); // 获取上一页按钮
         let currentPage = 0;
         let isAnimating = false;
-        let isFinalEffectTriggered = false; // 确保特效只触发一次
+        let isFinalEffectTriggered = false;
 
         // 1. 尝试自动播放音乐
         window.addEventListener('load', () => {
             audio.play().catch(() => {
                 musicControl.classList.add('paused');
             });
+            updateNavButtons(); // 初始化按钮状态
         });
 
         // 2. 音乐图标控制
@@ -451,57 +467,86 @@
             }
         });
 
-        // 3. 点击屏幕触发逻辑
+        // --- [修改] 通用的翻页函数 ---
+        function changePage(direction) {
+            if (isAnimating) return;
+            
+            // 下一页
+            if (direction === 'next') {
+                if (currentPage < pages.length - 1) {
+                    isAnimating = true;
+                    pages[currentPage].classList.remove('active');
+                    currentPage++;
+                    pages[currentPage].classList.add('active');
+                    setTimeout(() => { isAnimating = false; }, 600);
+                } else {
+                    // 最后一页点击下一页，触发特效
+                    if (!isFinalEffectTriggered) {
+                        startEndEffect();
+                        isFinalEffectTriggered = true;
+                    }
+                }
+            } 
+            // 上一页
+            else if (direction === 'prev') {
+                if (currentPage > 0) {
+                    isAnimating = true;
+                    pages[currentPage].classList.remove('active');
+                    currentPage--;
+                    pages[currentPage].classList.add('active');
+                    setTimeout(() => { isAnimating = false; }, 600);
+                }
+            }
+            updateNavButtons(); // 每次翻页更新按钮显示
+        }
+
+        // --- [新增] 更新按钮状态（第一页隐藏“上一页”）---
+        function updateNavButtons() {
+            if (currentPage === 0) {
+                prevBtn.classList.remove('show');
+            } else {
+                prevBtn.classList.add('show');
+            }
+        }
+
+        // 3. 点击屏幕触发逻辑 (统一处理)
         document.body.addEventListener('click', (e) => {
-            // A. 处理音乐
+            // A. 处理音乐：如果还没播放，第一次点击时播放
             if (audio.paused) {
                 audio.play();
                 musicControl.classList.remove('paused');
             }
 
-            // B. 处理页面切换
+            // B. 排除不需要翻页的元素
             if (e.target.tagName === 'VIDEO' || e.target.closest('.gallery-container') || e.target.closest('#music-control')) return;
-            
-            if (isAnimating) return;
-            
 
-            if (currentPage < pages.length - 1) {
-                isAnimating = true;
-                pages[currentPage].classList.remove('active');
-                currentPage++;
-                pages[currentPage].classList.add('active');
-                setTimeout(() => { isAnimating = false; }, 800);
+            // C. 检查点击的是具体哪个按钮
+            if (e.target.closest('#btn-prev')) {
+                changePage('prev'); // 点击上一页按钮
             } else {
-                // 最后一页点击，触发特效
-                if (!isFinalEffectTriggered) {
-                    startEndEffect();
-                    isFinalEffectTriggered = true; // 标记已触发
-                }
+                changePage('next'); // 点击下一页按钮 或 点击屏幕其他任意位置
             }
         });
 
-        // --- 新版结束特效函数 (参考你提供的代码) ---
+        // --- 结束特效函数 ---
         function startEndEffect() {
             const container = document.getElementById('effect-container');
             container.style.display = 'block';
-            document.querySelector('.indicator').style.display = 'none'; // 隐藏底部提示
+            document.querySelector('.nav-bar').style.display = 'none'; // 隐藏底部按钮
 
             // 1. 持续掉落粉色SVG桃心
             setInterval(() => {
                 const heart = document.createElement('div');
                 heart.classList.add('falling-item', 'pink-heart-svg');
-                
-                // 随机位置、大小、速度
                 heart.style.left = Math.random() * 100 + '%';
-                const duration = Math.random() * 4 + 4; // 4-8秒
+                const duration = Math.random() * 4 + 4; 
                 heart.style.animationDuration = duration + 's';
-                const size = Math.random() * 20 + 20; // 20-40px
+                const size = Math.random() * 20 + 20; 
                 heart.style.width = size + 'px';
                 heart.style.height = size + 'px';
-
                 container.appendChild(heart);
                 setTimeout(() => heart.remove(), duration * 1000);
-            }, 150); // 每150ms生成一个桃心
+            }, 150); 
 
             // 2. 持续掉落粉色文字
             const chars = ['我', '爱', '你'];
@@ -509,20 +554,16 @@
                 const textItem = document.createElement('div');
                 textItem.classList.add('falling-item', 'pink-text-char');
                 textItem.innerText = chars[Math.floor(Math.random() * chars.length)];
-
-                // 随机位置、大小、速度
                 textItem.style.left = Math.random() * 100 + '%';
-                const duration = Math.random() * 5 + 5; // 5-10秒，比桃心慢一点
+                const duration = Math.random() * 5 + 5; 
                 textItem.style.animationDuration = duration + 's';
-                textItem.style.fontSize = (Math.random() * 20 + 24) + 'px'; // 24-44px
-
+                textItem.style.fontSize = (Math.random() * 20 + 24) + 'px'; 
                 container.appendChild(textItem);
                 setTimeout(() => textItem.remove(), duration * 1000);
-            }, 300); // 每300ms生成一个文字
+            }, 300); 
 
-            // 延迟弹出最终祝福
             setTimeout(() => {
-                alert("一周年快乐！💖\n\n愿年年有今日，岁岁有今朝。\n我爱你！");
+                alert("一周年快乐！💖\n\n愿年年有今日，岁岁有今朝。\n和我一起去更美好的未来吧！");
             }, 3000);
         }
     </script>
