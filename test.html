@@ -9,6 +9,11 @@
         /* --- 字体引入 --- */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap');
 
+        /* --- 定义粉色变量 --- */
+        :root {
+            --primary-color: #ff6b81;
+        }
+
         /* --- 全局重置 --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -101,22 +106,44 @@
             animation: rotate 4s linear infinite;
         }
         #music-control.paused { animation-play-state: paused; opacity: 0.5; }
-        
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* ================= 特效样式 ================= */
+        /* ================= 新版特效样式 (参考你提供的代码) ================= */
         #effect-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 999; overflow: hidden;
             display: none; 
         }
+
+        /* 通用掉落元素 */
         .falling-item {
-            position: absolute; top: -10%; will-change: transform;
-            animation-name: fall; animation-timing-function: linear; animation-fill-mode: forwards;
+            position: absolute;
+            top: -10%;
+            will-change: transform;
+            animation: heartFall linear forwards;
         }
-        .heart-item { color: #ff9a9e; text-shadow: 0 0 5px rgba(255, 154, 158, 0.5); }
-        .char-item { font-weight: bold; color: #fff; text-shadow: 0 0 5px #ff9a9e, 0 0 10px #ff9a9e; }
-        @keyframes fall { to { transform: translateY(120vh) rotate(360deg); } }
+
+        /* 纯粉色SVG桃心 */
+        .pink-heart-svg {
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ff6b81" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        /* 粉色文字 */
+        .pink-text-char {
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+        }
+
+        @keyframes heartFall {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(120vh) rotate(360deg); }
+        }
     </style>
 </head>
 
@@ -403,18 +430,18 @@
         const musicControl = document.getElementById('music-control');
         let currentPage = 0;
         let isAnimating = false;
+        let isFinalEffectTriggered = false; // 确保特效只触发一次
 
         // 1. 尝试自动播放音乐
         window.addEventListener('load', () => {
             audio.play().catch(() => {
-                // 如果自动播放失败（大部分手机都会失败），则暂停旋转动画
                 musicControl.classList.add('paused');
             });
         });
 
         // 2. 音乐图标控制
         musicControl.addEventListener('click', (e) => {
-            e.stopPropagation(); // 防止触发页面切换
+            e.stopPropagation();
             if (audio.paused) {
                 audio.play();
                 musicControl.classList.remove('paused');
@@ -426,7 +453,7 @@
 
         // 3. 点击屏幕触发逻辑
         document.body.addEventListener('click', (e) => {
-            // A. 处理音乐：如果还没播放，第一次点击时播放
+            // A. 处理音乐
             if (audio.paused) {
                 audio.play();
                 musicControl.classList.remove('paused');
@@ -436,53 +463,67 @@
             if (e.target.tagName === 'VIDEO' || e.target.closest('.gallery-container') || e.target.closest('#music-control')) return;
             
             if (isAnimating) return;
-            isAnimating = true;
+            
 
             if (currentPage < pages.length - 1) {
+                isAnimating = true;
                 pages[currentPage].classList.remove('active');
                 currentPage++;
                 pages[currentPage].classList.add('active');
                 setTimeout(() => { isAnimating = false; }, 800);
             } else {
-                startEndEffect();
+                // 最后一页点击，触发特效
+                if (!isFinalEffectTriggered) {
+                    startEndEffect();
+                    isFinalEffectTriggered = true; // 标记已触发
+                }
             }
         });
 
-        // --- 结束特效函数 ---
+        // --- 新版结束特效函数 (参考你提供的代码) ---
         function startEndEffect() {
             const container = document.getElementById('effect-container');
             container.style.display = 'block';
+            document.querySelector('.indicator').style.display = 'none'; // 隐藏底部提示
 
+            // 1. 持续掉落粉色SVG桃心
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('falling-item', 'pink-heart-svg');
+                
+                // 随机位置、大小、速度
+                heart.style.left = Math.random() * 100 + '%';
+                const duration = Math.random() * 4 + 4; // 4-8秒
+                heart.style.animationDuration = duration + 's';
+                const size = Math.random() * 20 + 20; // 20-40px
+                heart.style.width = size + 'px';
+                heart.style.height = size + 'px';
+
+                container.appendChild(heart);
+                setTimeout(() => heart.remove(), duration * 1000);
+            }, 150); // 每150ms生成一个桃心
+
+            // 2. 持续掉落粉色文字
             const chars = ['我', '爱', '你'];
-            const totalItems = 100;
+            setInterval(() => {
+                const textItem = document.createElement('div');
+                textItem.classList.add('falling-item', 'pink-text-char');
+                textItem.innerText = chars[Math.floor(Math.random() * chars.length)];
 
-            for (let i = 0; i < totalItems; i++) {
-                const item = document.createElement('div');
-                item.classList.add('falling-item');
+                // 随机位置、大小、速度
+                textItem.style.left = Math.random() * 100 + '%';
+                const duration = Math.random() * 5 + 5; // 5-10秒，比桃心慢一点
+                textItem.style.animationDuration = duration + 's';
+                textItem.style.fontSize = (Math.random() * 20 + 24) + 'px'; // 24-44px
 
-                if (Math.random() > 0.3) {
-                    item.innerText = '💖';
-                    item.classList.add('heart-item');
-                } else {
-                    item.innerText = chars[Math.floor(Math.random() * chars.length)];
-                    item.classList.add('char-item');
-                }
+                container.appendChild(textItem);
+                setTimeout(() => textItem.remove(), duration * 1000);
+            }, 300); // 每300ms生成一个文字
 
-                item.style.left = Math.random() * 100 + '%';
-                const duration = Math.random() * 3 + 3;
-                const delay = Math.random() * 5;
-                item.style.animationDuration = duration + 's';
-                item.style.animationDelay = delay + 's';
-                item.style.fontSize = (Math.random() * 20 + 20) + 'px';
-
-                container.appendChild(item);
-                setTimeout(() => { item.remove(); }, (duration + delay) * 1000);
-            }
-
-            document.querySelector('.indicator').style.display = 'none';
+            // 延迟弹出最终祝福
             setTimeout(() => {
-                alert("一周年快乐！💖\n\n愿年年有今日，岁岁有今朝。\n和我一起去更美好的未来吧！");
-            }, 2000);
+                alert("一周年快乐！💖\n\n愿年年有今日，岁岁有今朝。\n我爱你！");
+            }, 3000);
         }
     </script>
 </body>
