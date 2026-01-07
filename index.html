@@ -1,273 +1,530 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>颜丽 & 王阳元 - 恋爱一周年年终总结</title>
+    <title>颜丽 & 王阳元 - 一周年快乐</title>
     <style>
-        /* --- 基础设置 --- */
+        /* --- 字体引入 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap');
+
+        /* --- 定义粉色变量 --- */
+        :root {
+            --primary-color: #ff6b81;
+        }
+
+        /* --- 全局重置 --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; overflow: hidden; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background-color: #000; color: #fff; }
+
+        body, html {
+            width: 100%; height: 100%; overflow: hidden;
+            font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background-color: #1a1a1a; color: #fff;
+        }
+
+        /* --- 视频背景专用样式 --- */
+        .video-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 0;
+        }
 
         /* --- 页面容器 --- */
         #app { width: 100%; height: 100%; position: relative; }
-        
-        /* --- 单个页面样式 --- */
+
+        /* --- 单页样式 --- */
         .page {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 40px;
-            opacity: 0; pointer-events: none; transition: all 0.8s ease-in-out;
-            background-size: cover; background-position: center;
-            z-index: 0;
+            padding: 30px 20px;
+            opacity: 0; pointer-events: none; transform: scale(1.05);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            background-size: cover; background-position: center; z-index: 1;
         }
 
-        /* 激活状态 */
-        .page.active { opacity: 1; pointer-events: auto; z-index: 10; }
-        
-        /* 遮罩层：为了让文字在照片背景上更清晰 */
+        /* 只有带有 active 类的页面才会显示 */
+        .page.active {
+            opacity: 1; pointer-events: auto; transform: scale(1); z-index: 10;
+        }
+
+        /* --- 遮罩层 --- */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* 调节这里的 0.6 可以改变背景变暗程度 */
-            z-index: 1;
+            background: rgba(0, 0, 0, 0.4); z-index: 2;
         }
 
-        /* --- 内容样式 --- */
-        .content { position: relative; z-index: 2; width: 100%; text-align: left; }
+        /* --- 毛玻璃卡片 --- */
+        .glass-card {
+            position: relative; z-index: 5;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px; padding: 30px 20px;
+            width: 90%; max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); text-align: left;
+        }
+
+        /* --- 排版细节 --- */
+        h1 { font-size: 26px; color: #fff; margin-bottom: 20px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+        h2 { font-size: 22px; color: #ffbfcd; margin-bottom: 15px; font-weight: 700; }
+        p { font-size: 15px; line-height: 1.7; margin-bottom: 12px; color: #f0f0f0; letter-spacing: 0.5px; }
         
-        h1 { font-size: 28px; margin-bottom: 20px; font-weight: bold; line-height: 1.4; color: #ff9a9e; }
-        h2 { font-size: 22px; margin-bottom: 15px; color: #fecfef; }
-        p { font-size: 16px; line-height: 1.8; margin-bottom: 15px; text-align: justify; }
+        .highlight-text { color: #ff9a9e; font-weight: bold; }
+        .date-tag { display: inline-block; padding: 4px 10px; background: rgba(255, 154, 158, 0.3); border-radius: 4px; font-size: 12px; margin-bottom: 8px; color: #fff; }
+
+        /* --- 数据展示 --- */
+        .stat-row { display: flex; align-items: baseline; margin-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; }
+        .stat-num { font-size: 36px; font-weight: 800; color: #ff9a9e; margin-right: 10px; font-family: 'Arial', sans-serif; }
+        .stat-label { font-size: 20px; font-weight: bold; color: #fff; }
+
+        /* --- 标签云 --- */
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+        .tag-item { background: linear-gradient(45deg, #ff9a9e, #fad0c4); color: #333; font-weight: bold; padding: 8px 15px; border-radius: 20px; font-size: 14px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+
+        /* --- 动画 --- */
+        .animate-up { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .page.active .animate-up { opacity: 1; transform: translateY(0); }
         
-        /* --- 特殊高亮文字 --- */
-        .highlight { color: #ffecd2; font-weight: bold; font-size: 1.2em; }
-        .big-num { font-size: 40px; font-weight: 800; color: #ff9a9e; display: block; margin: 10px 0; }
+        .d-1 { transition-delay: 0.1s; } .d-2 { transition-delay: 0.2s; } .d-3 { transition-delay: 0.3s; }
+        .d-4 { transition-delay: 0.4s; } .d-5 { transition-delay: 0.5s; }
 
-        /* --- 动画类 --- */
-        .animate-up { transform: translateY(30px); opacity: 0; transition: all 0.8s ease; }
-        .page.active .animate-up { transform: translateY(0); opacity: 1; }
-        
-        /* 延迟动画 */
-        .delay-1 { transition-delay: 0.2s; }
-        .delay-2 { transition-delay: 0.5s; }
-        .delay-3 { transition-delay: 0.8s; }
-        .delay-4 { transition-delay: 1.1s; }
+        /* --- 轮播 --- */
+        .gallery-container { width: 100%; overflow-x: auto; display: flex; gap: 10px; padding-bottom: 10px; scroll-snap-type: x mandatory; }
+        .gallery-item { flex: 0 0 100%; height: 350px; border-radius: 12px; overflow: hidden; scroll-snap-align: center; position: relative; background: #333; }
+        .gallery-item img, .gallery-item video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- 相册/轮播样式 --- */
-        .gallery-scroll {
-            display: flex; overflow-x: auto; gap: 10px; padding: 10px 0;
-            width: 100%; scroll-snap-type: x mandatory;
-        }
-        .gallery-item {
-            flex: 0 0 80%; height: 300px; background-color: #333; border-radius: 12px;
-            overflow: hidden; scroll-snap-align: center; position: relative;
-        }
-        .gallery-item img, .gallery-item video {
-            width: 100%; height: 100%; object-fit: cover;
-        }
+        /* --- 指示器 --- */
+        .indicator { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 12px; z-index: 20; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
 
-        /* --- 底部提示 --- */
-        .tap-hint {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 20; font-size: 12px; opacity: 0.7; animation: bounce 2s infinite;
+        /* --- 音乐控制图标 --- */
+        #music-control {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            width: 36px; height: 36px;
+            background: rgba(0,0,0,0.5); border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);
+            display: flex; justify-content: center; align-items: center;
+            animation: rotate 4s linear infinite;
+        }
+        #music-control.paused { animation-play-state: paused; opacity: 0.5; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* ================= 新版特效样式 (参考你提供的代码) ================= */
+        #effect-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 999; overflow: hidden;
+            display: none; 
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, 10px); }
+        /* 通用掉落元素 */
+        .falling-item {
+            position: absolute;
+            top: -10%;
+            will-change: transform;
+            animation: heartFall linear forwards;
+        }
+
+        /* 纯粉色SVG桃心 */
+        .pink-heart-svg {
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ff6b81" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
+
+        /* 粉色文字 */
+        .pink-text-char {
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+        }
+
+        @keyframes heartFall {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(120vh) rotate(360deg); }
         }
     </style>
 </head>
+
 <body>
 
-<div id="app">
-    <div class="tap-hint">点击屏幕继续 ▼</div>
-    
-    <div class="page active" style="background-image: url('placeholder-cover.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h1 class="animate-up">颜丽，你好</h1>
-            <p class="animate-up delay-1">今天是你和王阳元<br>恋爱一周年纪念日</p>
-            <p class="animate-up delay-2">这一年，我们度过了很多美好的时光。</p>
-            <p class="animate-up delay-3" style="margin-top: 40px; font-size: 14px; opacity: 0.8;">下面是我们的年终总结 &rarr;</p>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-travel.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">脚步</h2>
-            <p class="animate-up delay-1">这一年，我们去了 <span class="highlight">7</span> 个城市。</p>
-            <div class="animate-up delay-2" style="font-size: 15px; line-height: 2;">
-                长沙·橘子洲头<br>天津·五大道<br>上海·迪士尼<br>密云水库·树屋<br>威海·海边<br>福州 & 平潭
-            </div>
-            <p class="animate-up delay-3" style="margin-top: 30px; font-style: italic; font-size: 14px;">“以及每个地方都买了一些没什么用的周边...”</p>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-movie.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">光影</h2>
-            <p class="animate-up delay-1">今年我们一起看了 <span class="highlight">2</span> 部难忘的电影：</p>
-            <div class="animate-up delay-2" style="margin-top: 20px;">
-                <p>《罗小黑战记》</p>
-                <p>《疯狂动物城》</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-chat.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">碎碎念</h2>
-            <p class="animate-up delay-1">在微信里，我们说了：</p>
-            <div class="animate-up delay-2">
-                <span class="big-num">65 次</span> “爱你”
-                <span class="big-num">317 次</span> “想你”
-                <span class="big-num" style="color: #ffecd2;">321 次</span> “吃啥”
-            </div>
-            <p class="animate-up delay-3" style="margin-top: 20px;">爱情诚可贵，吃啥价更高。<br>鉴定完毕：<span class="highlight">一对吃货伴侣</span>。</p>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-fun.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">加密通话</h2>
-            <p class="animate-up delay-1">我们线下最小众的高频词汇是：</p>
-            <h1 class="animate-up delay-2" style="font-size: 36px;">“甄否” & “甄之”</h1>
-            <p class="animate-up delay-3">大概 500 年内，没人明白这是什么意思。</p>
-            <p class="animate-up delay-4" style="font-size: 12px; opacity: 0.6;">(这是只属于我们的小默契)</p>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-cat.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">新成员</h2>
-            <p class="animate-up delay-1">值得一提的是，我们收养了一只小猫。</p>
-            <p class="animate-up delay-2"><span class="highlight">奥利奥</span> 到家已经 <span class="highlight">129</span> 天。</p>
-            <p class="animate-up delay-3">期间有很多美好的回忆。<br>它马上也将去往自己的蛋完之地。</p>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-month1.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">春·相遇与磨合</h2>
-            <div class="animate-up delay-1" style="font-size: 14px;">
-                <p><strong>1月</strong>：解锁了一起打台球，解锁了互相说“想你”。那时的你，还是个不好意思视频说想我的小女孩。</p>
-                <p><strong>2月</strong>：长沙结束短暂异地，半夜激动的睡不着赶来见面，首次进入弘舍公寓。</p>
-                <p><strong>3月</strong>：忙碌考试和演出，你在破防时和家里人官宣了感情，然后开始照顾断腿的我。</p>
-                <p><strong>4月</strong>：看了梁彦增专场，去了树屋（最难忘的酒店），最后一天在迪士尼看了烟花。</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-month2.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">夏·热烈与成长</h2>
-            <div class="animate-up delay-1" style="font-size: 14px;">
-                <p><strong>5月</strong>：上海交大最开心的一天。节目虽遗憾失利，但在520收到了感人的信。同游天津和威海。</p>
-                <p><strong>6月</strong>：你耳机丢了，送了你新耳机但遗憾耳朵小戴不下。你做了很多梦，总问我为什么。</p>
-                <p><strong>7月</strong>：我备战专场首演，你备战夏令营。焦虑下，我们有了各种各样的规划。</p>
-                <p><strong>8月</strong>：又去上海，瑞萍了精卫。你拥有了电动车！我开始实习，生活忙碌起来。</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-month3.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">秋冬·生活与陪伴</h2>
-            <div class="animate-up delay-1" style="font-size: 14px;">
-                <p><strong>9月</strong>：收到用心的生日礼物。奥利奥出现，“小魔童”进入生活，有猫后基本开始同居。</p>
-                <p><strong>10月</strong>：小奥子乱吃耳塞，你急哭了，幸好母子平安。演出后我开始给你带纪念品。</p>
-                <p><strong>11月</strong>：“吃啥”和小猫是最多的话题。生活平凡温馨，抽空逛了几次胡同。</p>
-                <p><strong>12月</strong>：忙碌又美好。除了我在你梦里用牙刷刷鞋...跨年那天，我们在各玩各的。</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="page" style="background-color: #222;"> <div class="content">
-            <h2 class="animate-up">精彩的瞬间</h2>
-            <p class="animate-up delay-1">这一年，闪闪发光。</p>
-            
-            <div class="gallery-scroll animate-up delay-2">
-                <div class="gallery-item">
-                    <img src="highlight1.jpg" alt="Photo 1"> </div>
-                <div class="gallery-item">
-                    <img src="highlight2.jpg" alt="Photo 2"> </div>
-                 <div class="gallery-item">
-                     <video src="video1.mp4" controls playsinline></video>
-                </div>
-                <div class="gallery-item">
-                    <img src="highlight3.jpg" alt="Photo 3">
-                </div>
-            </div>
-            <p class="animate-up delay-3" style="font-size: 12px; margin-top: 10px; opacity: 0.6;">(左右滑动查看更多)</p>
-        </div>
-    </div>
-
-    <div class="page" style="background-color: #222;">
-        <div class="content">
-            <h2 class="animate-up">莫名其妙的瞬间</h2>
-            <p class="animate-up delay-1">当然，也有这些...</p>
-            
-            <div class="gallery-scroll animate-up delay-2">
-                <div class="gallery-item">
-                    <img src="funny1.jpg" alt="Funny 1"> </div>
-                <div class="gallery-item">
-                    <img src="funny2.jpg" alt="Funny 2">
-                </div>
-                <div class="gallery-item">
-                    <img src="funny3.jpg" alt="Funny 3">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="page" style="background-image: url('placeholder-end.jpg');"> <div class="overlay"></div>
-        <div class="content">
-            <h2 class="animate-up">To 颜丽</h2>
-            <div class="animate-up delay-1">
-                <p>和你在一起真的很幸福。</p>
-                <p>你依然是非常善良、非常耐心的人。</p>
-                <p>和你在一起的每个瞬间，都能感觉到被爱。</p>
-            </div>
-            <div class="animate-up delay-2" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 20px;">
-                <p>新的一年，我们要去更多的地方，做更多的事情。</p>
-                <p>一起变成更好的人。</p>
-                <p>过上更美好、更自由的生活。</p>
-            </div>
-            <p class="animate-up delay-3" style="margin-top: 40px; font-weight: bold; color: #ff9a9e;">一周年快乐！</p>
-        </div>
-    </div>
-
-</div>
-
-<script>
-    // 简单的页面切换逻辑
-    const pages = document.querySelectorAll('.page');
-    let currentPage = 0;
-
-    // 点击屏幕切换下一页
-    document.body.addEventListener('click', (e) => {
-        // 如果点击的是视频或相册区域，不要切换页面
-        if (e.target.tagName === 'VIDEO' || e.target.closest('.gallery-scroll')) {
-            return;
-        }
-
-        // 移除当前页激活状态
-        pages[currentPage].classList.remove('active');
-
-        // 计算下一页
-        currentPage++;
+    <div id="app">
+        <audio id="bgm" src="love.mp3" loop preload="auto"></audio>
         
-        // 如果是最后一页，可以循环回第一页，或者这就停住
-        if (currentPage >= pages.length) {
-            currentPage = pages.length - 1; // 停在最后一页
-            alert("已经是最后一页啦 ❤️");
-            pages[currentPage].classList.add('active');
-        } else {
-            // 激活下一页
-            pages[currentPage].classList.add('active');
-        }
-    });
-</script>
+        <div id="music-control">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
 
+        <div class="indicator">点击屏幕继续 ▼</div>
+
+        <div class="page active" style="background-image: url('cover.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h1 class="animate-up">颜丽，你好</h1>
+                <p class="animate-up d-1">今天是你和王阳元<br>恋爱一周年纪念日 ❤️</p>
+                <p class="animate-up d-2">这一年，我们度过了很多美好的时光。</p>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.3);" class="animate-up d-3">
+                <p class="animate-up d-4">下面是我们的年终总结 &rarr;</p>
+            </div>
+        </div>
+
+        <div class="page">
+            <video class="video-bg" autoplay loop muted playsinline>
+                <source src="合影.MOV" type="video/mp4">
+            </video>
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">🌍 我们的足迹</h2>
+                <p class="animate-up d-1">这一年，我们去了 <span class="highlight-text" style="font-size: 24px;">7</span> 个城市：</p>
+                <div class="animate-up d-2" style="margin-top: 15px; font-weight: bold; line-height: 2;">
+                    长沙·橘子洲头 <br>天津·五大道 <br>上海·迪士尼 <br>密云水库·树屋 <br>威海·海边 <br>福州 & 平潭
+                </div>
+                <p class="animate-up d-3" style="margin-top: 20px; font-size: 13px; opacity: 0.8;">“每个地方都买了一些没什么用的周边...”</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('movie.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">🎬 共同的观影</h2>
+                <p class="animate-up d-1">只看了 2 部，但都很经典：</p>
+                <div class="animate-up d-2" style="margin: 20px 0;">
+                    <p>《罗小黑战记》</p>
+                    <p>《疯狂动物城》</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('chat.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">💬 微信关键词</h2>
+                <div class="animate-up d-1" style="margin-top: 20px;">
+                    <div class="stat-row"><span class="stat-num">65</span> <span class="stat-label">次 “爱你”</span></div>
+                    <div class="stat-row"><span class="stat-num">317</span> <span class="stat-label">次 “想你”</span></div>
+                    <div class="stat-row" style="border-bottom: none;"><span class="stat-num" style="color: #ffeaa7; font-size: 42px;">321</span> <span class="stat-label">次 “吃啥”</span></div>
+                </div>
+                <p class="animate-up d-2" style="margin-top: 10px;">爱情诚可贵，吃啥价更高。</p>
+                <p class="animate-up d-3"><span class="highlight-text">盖章认证：一对吃货伴侣。</span></p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('funny.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">🔒 加密通话</h2>
+                <p class="animate-up d-1">我们线下最小众的高频词汇：</p>
+                <div class="animate-up d-2" style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; display: block; margin-bottom: 10px;">“甄否”</span>
+                    <span style="font-size: 32px; font-weight: bold;">“甄之”</span>
+                </div>
+                <p class="animate-up d-3">500年内，大概没人明白这是什么意思。</p>
+            </div>
+        </div>
+
+        <div class="page"> 
+            <video class="video-bg" autoplay loop muted playsinline>
+                <source src="cat.mp4" type="video/mp4">
+            </video>
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">🐱 我们的奥利奥</h2>
+                <p class="animate-up d-1">值得一提的是，我们收养了一只小猫。</p>
+                <p class="animate-up d-2"><strong style="font-size: 20px; color: #ff9a9e;">奥利奥</strong> 到家已经 <strong>129</strong> 天。</p>
+                <p class="animate-up d-3">期间有很多美好的回忆。</p>
+                <p class="animate-up d-4" style="margin-top: 15px;">它马上也将去往自己的<br><span style="border-bottom: 2px dashed #fff;">蛋完之地</span>。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m1.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">January</span>
+                <h2 class="animate-up">1月 · 萌芽</h2>
+                <p class="animate-up d-1">解锁了一起打台球。</p>
+                <p class="animate-up d-2">开始互相说“想你”。</p>
+                <p class="animate-up d-3">那时你还是个不好意思视频说想我的小女孩。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m2.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">February</span>
+                <h2 class="animate-up">2月 · 奔赴</h2>
+                <p class="animate-up d-1">在长沙结束了短暂的异地。</p>
+                <p class="animate-up d-2">在半夜激动的睡不着赶来见面。</p>
+                <p class="animate-up d-3">那之后不久，首次进入了弘舍公寓。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m3.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">March</span>
+                <h2 class="animate-up">3月 · 陪伴</h2>
+                <p class="animate-up d-1">和你一起过了第一个你的生日</p>
+                <p class="animate-up d-2">你在破防时和家里人官宣了感情。</p>
+                <p class="animate-up d-3">然后开始了照顾断腿男友的生活。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m4.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">April</span>
+                <h2 class="animate-up">4月 · 浪漫</h2>
+                <p class="animate-up d-1">看了梁彦增专场。</p>
+                <p class="animate-up d-2">去了树屋，那是我们最难忘的住宿环境。</p>
+                <p class="animate-up d-3">四月最后一天去了迪士尼，一起看了美丽的烟花。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m5.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">May</span>
+                <h2 class="animate-up">5月 · 感动</h2>
+                <p class="animate-up d-1">五月第一天，去了上海交大，你说这是在上海最开心的一天。</p>
+                <p class="animate-up d-2">节目虽遗憾失利，但在520收到了你非常感人的信。</p>
+            </div>
+        </div>
+
+        <div class="page"> 
+            <video class="video-bg" autoplay loop muted playsinline>
+                <source src="m6.MOV" type="video/mp4">
+            </video>
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">June</span>
+                <h2 class="animate-up">6月 · 玩耍</h2>
+                <p class="animate-up d-1">你耳机丢了，我送了新耳机，遗憾你耳朵小戴不上。</p>
+                <p class="animate-up d-2">一起做了戒指！</p>
+                <p class="animate-up d-3">情侣款拉布布</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m7.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">July</span>
+                <h2 class="animate-up">7月 · 规划</h2>
+                <p class="animate-up d-1">我开始准备专场首演。</p>
+                <p class="animate-up d-2">你备战夏令营，焦虑下，我们有了各种各样的规划和想法。</p>
+                <p class="animate-up d-3">哦中途回趟家，还异地了一会</p>
+            </div>
+        </div>
+
+        <div class="page"> 
+            <video class="video-bg" autoplay loop muted playsinline>
+                <source src="m8.mp4" type="video/mp4">
+            </video>
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">August</span>
+                <h2 class="animate-up">8月 · 忙碌</h2>
+                <p class="animate-up d-1">又去上海，瑞萍了精卫。</p>
+                <p class="animate-up d-2">你拥有了自己的电动车！</p>
+                <p class="animate-up d-3">我也开始实习了，一起进入了比较忙碌的生活。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m9.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">September</span>
+                <h2 class="animate-up">9月 · 礼物</h2>
+                <p class="animate-up d-1">奥利奥出现，小魔童进入生活，一直在忙带娃。</p>
+                <p class="animate-up d-2">我收到了特别特别用心的生日礼物，非常感动。</p>
+                <p class="animate-up d-3">中途还去济南玩了</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m10.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">October</span>
+                <h2 class="animate-up">10月 · 牵挂</h2>
+                <p class="animate-up d-1">国庆去了天津</p>
+                <p class="animate-up d-1">小奥子乱吃耳塞，你急哭了，幸好母子平安。</p>
+                <p class="animate-up d-3">我去各地演出，总会想给你带点好看的小礼物。</p>
+                <p class="animate-up d-4">月底一起看了livehouse</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('m11.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">November</span>
+                <h2 class="animate-up">11月 · 愿景</h2>
+                <p class="animate-up d-1">“吃啥”和“小猫”是聊最多的话题。</p>
+                <p class="animate-up d-2">老演出碰不上面，但还是抽空逛了几次胡同。</p>
+                <p class="animate-up d-3">“不想上班”是我们的共同愿景。</p>
+            </div>
+        </div>
+
+        <div class="page"> 
+            <video class="video-bg" autoplay loop muted playsinline>
+                <source src="m12.mp4" type="video/mp4">
+            </video>
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <span class="date-tag">December</span>
+                <h2 class="animate-up">12月 · 思念</h2>
+                <p class="animate-up d-1">一起堆了雪人，一起吸猫</p>
+                <p class="animate-up d-2">跨年那天，我们在各玩各的。</p>
+                <p class="animate-up d-3">最后几天都是异地，<span class="highlight-text">很想你</span>。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('other.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">✨ 还有...</h2>
+                <p class="animate-up d-1">你非要晚上喝奶茶结果睡不着。</p>
+                <p class="animate-up d-2">半夜做广播体操，给奥利奥打飞。</p>
+                <p class="animate-up d-3">还有无数次，我们坐在一起，哪怕只是吃顿饭。</p>
+            </div>
+        </div>
+
+        <div class="page" style="background-image: url('end_bg.jpg');">
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up" style="text-align: center;">🏆 颜丽的年终总结</h2>
+                <div class="tag-cloud animate-up d-1">
+                    <span class="tag-item">超级可爱大魔王</span>
+                    <span class="tag-item">不想上班</span>
+                    <span class="tag-item">挑食瘦子</span>
+                    <span class="tag-item">奶茶罐子</span>
+                    <span class="tag-item">拼豆大神</span>
+                    <span class="tag-item">星露谷谷花</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="page"> 
+            <video class="video-bg" autoplay loop muted playsinline>
+                <source src="final.mp4" type="video/mp4">
+            </video>
+            <div class="overlay"></div>
+            <div class="glass-card">
+                <h2 class="animate-up">To 颜丽</h2>
+                <p class="animate-up d-1">和你在一起真的很幸福。</p>
+                <p class="animate-up d-2">你依然是非常善良、非常耐心的人。</p>
+                <p class="animate-up d-3">和你在一起的每个瞬间都能感觉到被爱。</p>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.3);" class="animate-up d-4">
+                <p class="animate-up d-5">新的一年，我们要去更多的地方，做更多的事情，一起变成更好的人。</p>
+                <p class="animate-up d-5" style="margin-top: 10px; font-weight: bold; color: #ff9a9e;">过上更美好更自由的生活。</p>
+            </div>
+        </div>
+
+    </div>
+    
+    <div id="effect-container"></div>
+
+    <script>
+        // --- 核心逻辑 ---
+        const pages = document.querySelectorAll('.page');
+        const audio = document.getElementById('bgm');
+        const musicControl = document.getElementById('music-control');
+        let currentPage = 0;
+        let isAnimating = false;
+        let isFinalEffectTriggered = false; // 确保特效只触发一次
+
+        // 1. 尝试自动播放音乐
+        window.addEventListener('load', () => {
+            audio.play().catch(() => {
+                musicControl.classList.add('paused');
+            });
+        });
+
+        // 2. 音乐图标控制
+        musicControl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (audio.paused) {
+                audio.play();
+                musicControl.classList.remove('paused');
+            } else {
+                audio.pause();
+                musicControl.classList.add('paused');
+            }
+        });
+
+        // 3. 点击屏幕触发逻辑
+        document.body.addEventListener('click', (e) => {
+            // A. 处理音乐
+            if (audio.paused) {
+                audio.play();
+                musicControl.classList.remove('paused');
+            }
+
+            // B. 处理页面切换
+            if (e.target.tagName === 'VIDEO' || e.target.closest('.gallery-container') || e.target.closest('#music-control')) return;
+            
+            if (isAnimating) return;
+            
+
+            if (currentPage < pages.length - 1) {
+                isAnimating = true;
+                pages[currentPage].classList.remove('active');
+                currentPage++;
+                pages[currentPage].classList.add('active');
+                setTimeout(() => { isAnimating = false; }, 800);
+            } else {
+                // 最后一页点击，触发特效
+                if (!isFinalEffectTriggered) {
+                    startEndEffect();
+                    isFinalEffectTriggered = true; // 标记已触发
+                }
+            }
+        });
+
+        // --- 新版结束特效函数 (参考你提供的代码) ---
+        function startEndEffect() {
+            const container = document.getElementById('effect-container');
+            container.style.display = 'block';
+            document.querySelector('.indicator').style.display = 'none'; // 隐藏底部提示
+
+            // 1. 持续掉落粉色SVG桃心
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('falling-item', 'pink-heart-svg');
+                
+                // 随机位置、大小、速度
+                heart.style.left = Math.random() * 100 + '%';
+                const duration = Math.random() * 4 + 4; // 4-8秒
+                heart.style.animationDuration = duration + 's';
+                const size = Math.random() * 20 + 20; // 20-40px
+                heart.style.width = size + 'px';
+                heart.style.height = size + 'px';
+
+                container.appendChild(heart);
+                setTimeout(() => heart.remove(), duration * 1000);
+            }, 150); // 每150ms生成一个桃心
+
+            // 2. 持续掉落粉色文字
+            const chars = ['我', '爱', '你'];
+            setInterval(() => {
+                const textItem = document.createElement('div');
+                textItem.classList.add('falling-item', 'pink-text-char');
+                textItem.innerText = chars[Math.floor(Math.random() * chars.length)];
+
+                // 随机位置、大小、速度
+                textItem.style.left = Math.random() * 100 + '%';
+                const duration = Math.random() * 5 + 5; // 5-10秒，比桃心慢一点
+                textItem.style.animationDuration = duration + 's';
+                textItem.style.fontSize = (Math.random() * 20 + 24) + 'px'; // 24-44px
+
+                container.appendChild(textItem);
+                setTimeout(() => textItem.remove(), duration * 1000);
+            }, 300); // 每300ms生成一个文字
+
+            // 延迟弹出最终祝福
+            setTimeout(() => {
+                alert("一周年快乐！💖\n\n愿年年有今日，岁岁有今朝。\n我爱你！");
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
